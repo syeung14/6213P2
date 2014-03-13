@@ -12,9 +12,14 @@ import java.util.Arrays;
 
 public class DataFileSorter {
 
-	private static int MEM_SIZE = 400;
+	private static int MEM_SIZE = 40000;
 	public DataFileSorter() {
 	}	
+	
+	public void sort() {
+		
+		
+	}
 	
 	public void initRun(String srcFile,String tmpOutFile) {
 		if (srcFile ==null || "".equals(srcFile)  ||
@@ -61,16 +66,19 @@ public class DataFileSorter {
 			i++;
 		} //
 
-		Arrays.sort(entries,0,i);
+		Arrays.sort(entries, 0, i);
+		
+		System.out.println("found:"+Arrays.binarySearch(entries,0,i, "Air Assuz,135-437-5730") );
+		
 		for (String e : entries) {
-			if (e!=null) {
+			if (e != null) {
 
 				bw.write(e);
 				bw.newLine();
 			}
 		}
 		double endTime = System.currentTimeMillis();
-//		System.out.println("Sort took:" + (endTime-startTime)/1000);
+		System.out.println("Sort took:" + (endTime-startTime)/1000);
 		if (entries[0]!=null) {
 			return true; //may have more data
 		}
