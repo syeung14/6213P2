@@ -16,7 +16,8 @@ public class CreateLargeFile {
 
 	public static void main(String[] args) throws Exception {
 		
-		CreateLargeFile.phoneBookGen(fileName,40000000);
+		CreateLargeFile.phoneBookGen(fileName,4001);
+//		CreateLargeFile.writeBinFile(fileName);
 	}
 
 	private static void phoneBookGen(String fileName, int size) {
@@ -34,7 +35,6 @@ public class CreateLargeFile {
 						Integer.toString(1000+(int)(new Random().nextInt(9000)));
 
 //				entry = ngen.getName() + "," + "100";
-				
 				
 				osw.write(entry);
 				osw.newLine(); //cost 2 bytes

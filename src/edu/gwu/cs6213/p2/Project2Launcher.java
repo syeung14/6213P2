@@ -7,7 +7,7 @@ public class Project2Launcher {
 	
 	private void loadFile(String srcFile,String tmpOutFile) throws IOException {
 		DataFileSorter fReader = new DataFileSorter();
-		fReader.initRun(srcFile, tmpOutFile);
+		fReader.sortFileContent(srcFile, tmpOutFile);
 
 //		IndexBuilder build = new IndexBuilder();
 //		build.buildIndex();

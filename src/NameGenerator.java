@@ -11,7 +11,7 @@ public class NameGenerator {
 
 	public NameGenerator() {
 		String demoVocals[] = { "a", "e", "i", "o", "u", "ei", "ai", "ou", "j",
-				"ji", "y", "oi", "au", "oo" };
+				"ji", "y", "oi", "au", "oo","ia","ie","ii" ,"io","iu","ij" };
 
 		String demoStartConsonants[] = { "b", "c", "d", "f", "g", "h", "k",
 				"l", "m", "n", "p", "q", "r", "s", "t", "v", "w", "x", "z",

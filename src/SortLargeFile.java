@@ -6,7 +6,7 @@ public class SortLargeFile {
 
 	public static void main(String[] args) throws Exception {
 		// Sort largedata.dat to sortedfile.dat
-		sort("largedata.dat", "sortedfile.dat");
+		sort("largedata0.dat", "sortedfile.dat");
 
 		// Display the first 100 numbers in the sorted file
 		displayFile("sortedfile.dat");
@@ -23,8 +23,7 @@ public class SortLargeFile {
 	}
 
 	/** Sort original file into sorted segments */
-	private static int initializeSegments
-	(int segmentSize, String originalFile, String f1)
+	private static int initializeSegments(int segmentSize, String originalFile, String f1)
 			throws Exception {
 		int[] list = new int[segmentSize];
 		DataInputStream input = new DataInputStream( 
@@ -72,10 +71,8 @@ public class SortLargeFile {
 	private static void mergeOneStep(int numberOfSegments,
 			int segmentSize, String f1, String f2, String f3)
 					throws Exception {
-		DataInputStream f1Input = new DataInputStream(
-				new BufferedInputStream(new FileInputStream(f1), BUFFER_SIZE));
-		DataOutputStream f2Output = new DataOutputStream(
-				new BufferedOutputStream(new FileOutputStream(f2), BUFFER_SIZE));
+		DataInputStream f1Input = new DataInputStream(new BufferedInputStream(new FileInputStream(f1), BUFFER_SIZE));
+		DataOutputStream f2Output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(f2), BUFFER_SIZE));
 
 		// Copy half number of segments from f1.dat to f2.dat
 		copyHalfToF2(numberOfSegments, segmentSize, f1Input, f2Output);
@@ -99,6 +96,7 @@ public class SortLargeFile {
 	private static void copyHalfToF2(int numberOfSegments,
 			int segmentSize, DataInputStream f1, DataOutputStream f2)
 					throws Exception {
+		
 		for (int i = 0; i < (numberOfSegments / 2) * segmentSize; i++) {
 			f2.writeInt(f1.readInt());
 		}
