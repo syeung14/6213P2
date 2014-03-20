@@ -1,0 +1,82 @@
+<?xml version="1.0"?>
+<project name="Project2" default="usage" basedir=".">
+
+	<property name="src.main" 			value="${basedir}/src/main" />
+	<property name="build.folder" 		value="${basedir}/build"/>
+	<property name="deploy.folder" 		value="${basedir}/deploy"/>
+	<property name="deploy.jarfilename" value="project2.jar" />
+	<property name="deploy.srcjarfilename" value="project2-src.jar" />
+	<property name="lib" 				value="${basedir}/lib"/>
+	<property name="resources" 			value="${basedir}/src/resources"/>
+
+	<target name="usage">
+		<echo message=""/>
+		<echo message="GWU CS6213 - 2014 Spring"/>
+		<echo message="-----------------------------------------"/>
+		<echo message=""/>
+
+	</target>
+
+	<!-- - - - - - - - - - - - - - - - - - 
+          target: init                      
+         - - - - - - - - - - - - - - - - - -->
+	<target name="init">
+		<mkdir dir="${build.folder}"/>
+		<mkdir dir="${deploy.folder}"/>
+	</target>
+	<!-- - - - - - - - - - - - - - - - - - 
+          target: cleanup                      
+         - - - - - - - - - - - - - - - - - -->
+	<target name="cleanup">
+		<delete includeEmptyDirs="true" quiet="true">
+			<fileset dir="${build.folder}"/>
+			<fileset dir="${deploy.folder}"/>
+		</delete>
+	</target>
+
+	<!-- - - - - - - - - - - - - - - - - - 
+          class path for compile target  
+         - - - - - - - - - - - - - - - - - -->
+	<path id="classpath">
+		<fileset dir="${lib}">
+			<include name="**\*.jar" />
+		</fileset>
+	</path>
+
+	<!-- - - - - - - - - - - - - - - - - - 
+          target: compile                      
+         - - - - - - - - - - - - - - - - - -->
+	<target name="compile" depends="init">
+		<javac srcdir="${src.main}" destdir="${build.folder}">
+			<classpath refid="classpath"/>
+		</javac>
+	</target>
+
+	<target name="jar.src" depends="init">
+		<jar jarfile="${deploy.folder}/${deploy.srcjarfilename}">
+			<fileset dir="${src.main}" />
+			<fileset dir="${resources}/" />
+		</jar>
+	</target>
+	
+	<!-- ================================= 
+          target: create jar for deployment              
+         ================================= -->
+	<target name="Project 2" depends="compile" description="Project 2 Simulator">
+		<jar jarfile="${deploy.folder}/${deploy.jarfilename}">
+			<fileset dir="${build.folder}" />
+		</jar>
+        <copy todir="${deploy.folder}">
+            <fileset dir="${resources}">
+                <include name="**/*"/>
+            </fileset>
+        </copy>
+		<copy todir="${deploy.folder}/lib">
+			<fileset dir="${lib}">
+				<include name="**/*.jar" />
+			</fileset>
+		</copy>
+		<antcall target="jar.src"/>
+	</target>
+
+</project>

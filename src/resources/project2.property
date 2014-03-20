@@ -1,0 +1,6 @@
+#block size
+memory.size=4000      
+file.sourcefolder=input
+file.processedfolder=processed
+file.input.prefix=inputfile
+file.input.ext=txt
