@@ -4,3 +4,4 @@ build
 deploy
 input
 processed
+*.class
