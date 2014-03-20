@@ -12,11 +12,11 @@ import java.io.OutputStreamWriter;
 import java.util.Random;
 
 public class CreateLargeFile {
-	private static String fileName = "memoryarraytest.txt";
+	private static String fileName = "4m_datafile.txt";
 
 	public static void main(String[] args) throws Exception {
 		
-		CreateLargeFile.phoneBookGen(fileName,400);
+		CreateLargeFile.phoneBookGen(fileName,4_000_004);
 //		CreateLargeFile.writeBinFile(fileName);
 	}
 

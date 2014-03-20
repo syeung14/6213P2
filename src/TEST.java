@@ -202,34 +202,7 @@ public class TEST {
 		}
 	}
 
-	private static void buildIndex(String originalFile,String indexFile,int range) {
-		try (RandomAccessFile raf = new RandomAccessFile(originalFile, "r");
-				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
-						new FileOutputStream(indexFile))  )
-				) {
 
-			double startTime = System.currentTimeMillis();
-			System.out.println("Started to get the anchor values.");
-			String tmp,name[];
-			long pter = raf.getFilePointer();;
-			int cnt = 0;
-			while (  (tmp = raf.readLine()) != null)  {
-
-				if ( cnt++ % range == 0) {
-					name = tmp.split(",");
-					bw.write(name[0]+ "," +pter);
-					bw.newLine();
-				}
-				pter = raf.getFilePointer();
-			}
-			double endTime = System.currentTimeMillis();
-			System.out.println("Index created took:" + (endTime-startTime)/1000);
-			
-		} catch (IOException e) {
-			System.out.println("here");
-			e.printStackTrace();
-		}		
-	}
 	
 	private static class Entry{
 		private String name;
@@ -371,12 +344,16 @@ public class TEST {
 			//TEST.initializeSegments(10, "largedata.dat", "sorting.txt");
 //			TEST.loadRandom("400K_sorted.txt", 0);
 			
-			TEST.loadIndex("ind.400k.idx1.txt");
-			TEST.search("400K_sorted.txt" ,"@Ab Ab");
+//			TEST.loadIndex("ind.400k.idx1.txt");
+//			TEST.search("400K_sorted.txt" ,"@Ab Ab");
 
 //			TEST.bufferedArray("400K_sorted.txt");
 			
-//			TEST.buildIndex("400K_sorted.txt", "400K_sorted.idx.txt", 4000);
+//			TEST.buildIndex("4m_datafile.sorted.txt", "4m_datafile.idx.txt", 4000);
+			
+			TEST.loadIndex("4m_datafile.idx.txt");
+			TEST.search("4m_datafile.sorted.txt" ,"Autev Fauzynt");
+			
 //			TEST.searchInBlock("400K_sorted.txt",2759734,2867194);
 			
 		} catch (Exception e) {
