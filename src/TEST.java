@@ -339,6 +339,15 @@ public class TEST {
 		}
 	}
 
+	private static void testParse(){
+		String[] data = "".split(" ");
+		
+		System.out.println(data.length);
+		for (String st : data) {
+			System.out.println(st);
+		}
+		
+	}
 	public static void main(String[] args) {
 		try {
 			//TEST.initializeSegments(10, "largedata.dat", "sorting.txt");
@@ -351,8 +360,9 @@ public class TEST {
 			
 //			TEST.buildIndex("4m_datafile.sorted.txt", "4m_datafile.idx.txt", 4000);
 			
-			TEST.loadIndex("4m_datafile.idx.txt");
-			TEST.search("4m_datafile.sorted.txt" ,"Autev Fauzynt");
+//			TEST.loadIndex("4m_datafile.idx.txt");
+//			TEST.search("4m_datafile.sorted.txt" ,"Autev Fauzynt");
+			TEST.testParse();
 			
 //			TEST.searchInBlock("400K_sorted.txt",2759734,2867194);
 			

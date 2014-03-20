@@ -9,33 +9,93 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.RandomAccessFile;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+
+import org.apache.log4j.Logger;
+
+import edu.gwu.cs6213.p2.util.PropertiesLoader;
+import edu.gwu.cs6213.p2.util.PropertiesParser;
 
 public class DataFileProcesser {
 
+	private static final Logger logger = Logger.getLogger(DataFileProcesser.class);
+	
 	private int default_memSize = 4000;
 	private String srcFileName;
 	private String sortedFileName;
 	private String indexFileName;
-
+	private String inputFolder;
+	private String processedFolder;
+	private String inputFilePrefix;
+	private String inputFileExt;
 	
+	private PropertiesParser prop;
+	private static String folderSep = System.lineSeparator();
+	
+	private File[] inputFiles;
+	private File[] sortedFiles;
+	
+	@Deprecated
 	public DataFileProcesser(String srcFileName,
 			String sortedFileName, String indexFileName) {
+		this();
+		
 		this.srcFileName = srcFileName;
 		this.sortedFileName = sortedFileName;
 		this.indexFileName = indexFileName;
 	}
+	
+	public DataFileProcesser() {
+		this.prop = PropertiesLoader.getPropertyInstance();
+		this.default_memSize = prop.getIntProperty("memory.size", 4000);
+		
+		this.inputFolder = prop.getStringProperty("file.sourcefolder");
+		this.processedFolder = prop.getStringProperty("file.processedfolder");
+		this.inputFilePrefix =  prop.getStringProperty("file.input.prefix");	
+		this.inputFileExt =  prop.getStringProperty("file.input.ext");
+		
+		try {
+			inputFiles = FileUtil.getAllFiles(inputFolder, inputFilePrefix, inputFileExt);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
 	public void buildIndex() {
+		try {
+			
+			String sortFsuffix = "."+Constants.SORTED+"."+inputFileExt;
+			String indFileSuffix =  "."+Constants.INDEX +"."+inputFileExt;
+			String sFileN, s1stPartN, sortedF, indexF;
+
+			for (File f : inputFiles) {
+				sFileN = f.getName();
+				s1stPartN = FileUtil.getFileNameNoExt(sFileN, ".txt");
+				sortedF = processedFolder +"/" + s1stPartN + sortFsuffix;
+				indexF = processedFolder +"/" + s1stPartN + indFileSuffix;
+				
+				if (! new File(sortedF).isFile()) {
+					System.out.println("Sorted file not found, index is not created. " + sortedF );
+				}else {
+					System.out.println("Building index for " + sortedF);
+					doBuildIndex(sortedF, indexF);
+					System.out.println("=====================================");
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+	}
+	private void doBuildIndex(String sortedFileName, String indexFileName){
+			
 		try (RandomAccessFile raf = new RandomAccessFile(sortedFileName, "r");
 				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
 						new FileOutputStream(indexFileName))  )
 				) {
 
 			double startTime = System.currentTimeMillis();
-			System.out.println("Started to get the anchor values.");
+			System.out.println("Started to create index for " + sortedFileName);
 			String tmp,name[];
 			long pter = raf.getFilePointer();;
 			int cnt = 0;
@@ -49,32 +109,43 @@ public class DataFileProcesser {
 				pter = raf.getFilePointer();
 			}
 			double endTime = System.currentTimeMillis();
-			System.out.println("Index created took:" + (endTime-startTime)/1000);
+			System.out.println("Index "+indexFileName+" is created took:" + (endTime-startTime)/1000 +" s");
 			
 		} catch (IOException e) {
-			System.out.println("here");
 			e.printStackTrace();
 		}		
 	}	
 
 	public void sortFileContent() {
+		for (File f : inputFiles) {
+			String srcName = f.getName();
+			String firstPart = FileUtil.getFileNameNoExt(srcName, "."+inputFileExt);
+			
+			String sortedFName = processedFolder+"/"+ firstPart + "."+Constants.SORTED+"."+inputFileExt;
+			
+			doSortFileContent(srcName, sortedFName);
+		}
+		
+	}
+	private void doSortFileContent(String srcFileName, String sortedFileName){
 		
 		if (srcFileName ==null || "".equals(srcFileName)  ||
 				sortedFileName ==null || "".equals(sortedFileName)) {
 
 			throw new IllegalArgumentException("file name is not set.");
 		}
-		String tmp01 ="tmp01.tmp",tmp02 ="tmp02.tmp", tmp03="tmp03.tmp";
+		String tmp01 = processedFolder +"/"+ srcFileName +".tmp.1";//  prop.getStringProperty("externalsort.tmp.1");
+		String tmp02 = processedFolder +"/"+ srcFileName +".tmp.2";//  prop.getStringProperty("externalsort.tmp.2");
+		String tmp03 = processedFolder +"/"+ srcFileName +".tmp.3";//  prop.getStringProperty("externalsort.tmp.3");
 		
-		BufferedReader br =null;
-		BufferedWriter bw = null;
+		srcFileName = inputFolder +"/"+srcFileName;
+		
 		int runCnt = 0;
-		try {
-			System.out.println("started");
-			br = new BufferedReader(new InputStreamReader(
-					new FileInputStream(srcFileName)));
-			bw = new BufferedWriter(new OutputStreamWriter(
-					new FileOutputStream(tmp01)));
+		try (BufferedReader br = new BufferedReader(new InputStreamReader(
+				new FileInputStream(srcFileName)));
+				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
+						new FileOutputStream(tmp01)));     ) {
+			System.out.println("Start to count the number of runs " + srcFileName );
 
 			boolean hasMore =false;
 			do {
@@ -82,19 +153,16 @@ public class DataFileProcesser {
 				if (hasMore) runCnt++;
 			} while (hasMore);
 				
-			System.out.println("initial done. Run: " + runCnt);
+			System.out.println("Number of runs: " + runCnt);
 			bw.flush();
 			
 		} catch (IOException e) {
 			e.printStackTrace();
-		} finally {
-			try {br.close();bw.close();} catch (IOException e) {}
-			br = null;
 		}
 		
-		double startTime = System.currentTimeMillis();
 
-		System.out.println("Started external merge sort.");
+		double startTime = System.currentTimeMillis();
+		System.out.println("Started External Merge Sort.");
 		mergeSort(runCnt, default_memSize, tmp01, tmp02, tmp03, sortedFileName);
 		
 		try {
@@ -106,7 +174,8 @@ public class DataFileProcesser {
 		}
 		
 		double endTime = System.currentTimeMillis();
-		System.out.println("Merge Sort took:" + (endTime - startTime) / 1000);
+		System.out.println("External Merge Sort took:" + (endTime - startTime) / 1000 +" s");
+		System.out.println("=====================================");
 		
 	}
 	
@@ -143,7 +212,7 @@ public class DataFileProcesser {
 			File sortedFile = new File(sorted);
 			if (sortedFile.exists()) sortedFile.delete();
 			new File(tmpSort).renameTo(sortedFile);
-			System.out.println("done");
+			System.out.println(sortedFile.getName() +" is created.");
 		}
 	}
 	
@@ -274,152 +343,6 @@ public class DataFileProcesser {
 		}
 		moreSorted.flush();
 	} 
-	
-	
-	
-	/*****************************************************************************/
-	private static class Entry{
-		private String name;
-		private long byteLocation;
-		private Entry(String name, long byteLocation) {
-			this.name = name;
-			this.byteLocation = byteLocation;
-		}
-		@Override
-		public String toString() {
-			return name +"-"+ byteLocation;
-		}
-	}
-	private List<Entry>idxData;
-	private void loadIndex(String indexFile) {
-		try (RandomAccessFile idxReader = new RandomAccessFile(indexFile, "r"); ) {
-			
-			idxData = new ArrayList<>();
-			
-			String tmp;
-			String[]data;
-			while (  (tmp = idxReader.readLine()) != null)  {
-				data = tmp.split(",");
-				idxData.add(new Entry(data[0],Long.parseLong(data[1]) ));
-			}
-
-			System.out.println(idxData.size());
-		
-		} catch (IOException e) {
-			System.out.println("ERROR:index file is missing. \n" + e.getMessage());
-		}		
-	}
-	
-	private void searchInBlock(String dataFile, long startPos, long endPos, String key) {
-		
-		try (RandomAccessFile raf = new RandomAccessFile(dataFile, "r");){
-			byte []block = new byte[ (int)(endPos-startPos) ];
-
-			raf.seek(startPos);
-			raf.read(block);
-			
-			MemoryByteBuffer bb = new MemoryByteBuffer(block);
-			
-			String tmp= "";
-			String []data={"",""};
-			int cnt=0;
-			boolean found =false;
-			while ((tmp = bb.getNextLine()) != null) {
-				data = tmp.split(",");
-				cnt++;
-				
-				if (key.compareTo(data[0]) == 0) {
-					found = true;
-					break;
-				}
-			}
-			tmp = found?" record found " + data[1]:" record not found";
-			System.out.println("total line:"+cnt+" :"+tmp);
-
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-	}	
-	
-
-	enum Result{SMALLER,BIGGER,FOUND,NOTFOUND};
-	public void search(String key) {
-		
-		loadIndex(indexFileName);
-		if (idxData==null) {
-			return;
-		}
-
-		int idxsize = idxData.size()-1;
-		if (idxsize <=0) {
-			System.out.println("index file is not loaded.");
-			return;
-		}
-		// binary search for the anchor index
-		double startTime = System.currentTimeMillis();
-		Entry anchor= null;
-		Result result = null; 
-		int low = 0, high = idxsize;
-		int mid = 0;
-		while (high >= low) {
-			mid = (low + high) / 2;
-			anchor = idxData.get(mid);
-			
-			if (key.compareTo(anchor.name) > 0) {
-				low = mid + 1;
-				result = Result.BIGGER;
-			} else if (key.compareTo(anchor.name) == 0) {
-				result = Result.FOUND;
-				break;
-			} else {
-				high = mid - 1;
-				if (mid == 0) {
-					result = Result.NOTFOUND;
-				} else 
-					result = Result.SMALLER;
-			}
-		} 
-		double endTime = System.currentTimeMillis();
-		System.out.println("search anchor took:" + (endTime-startTime)/1000 +":" + anchor);
-		System.out.println("record in:" + (result==Result.BIGGER? "bigger than "+ mid: "smaller than "+mid) );
-		
-		Entry endAnchor=null;
-		long startPos = 0, endPos = 0;
-		if (result == Result.BIGGER || result == Result.FOUND) {
-			if (mid < idxsize) {
-				mid++;
-				endAnchor = idxData.get(mid);
-				endPos = endAnchor.byteLocation;
-			} else {
-				endPos = new File(sortedFileName).length();
-			}
-			
-			startPos = anchor.byteLocation;
-			
-		} else if (result == Result.SMALLER) {
-			int b4Mid = mid;
-			if (b4Mid > 0) {
-				b4Mid--;
-			}
-			anchor = idxData.get(b4Mid);
-			endAnchor = idxData.get(mid);
-			
-			startPos = anchor.byteLocation;
-			endPos = endAnchor.byteLocation;
-		} else if (result== Result.NOTFOUND) {
-			System.out.println("name is not in the phone book");
-		}
-		if (endPos>0) {
-			searchInBlock(sortedFileName, startPos, endPos, key);
-		} else {
-			System.out.println("search is not performed.");
-		}
-	}
-	
-	
-	
 	
 	
 }
