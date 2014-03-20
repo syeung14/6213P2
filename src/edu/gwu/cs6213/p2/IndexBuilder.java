@@ -24,8 +24,7 @@ public class IndexBuilder {
 		File[] files = getAllFiles(".");
 		
 		BufferedWriter bw =null;
-		bw = new BufferedWriter(new OutputStreamWriter(
-				new FileOutputStream("tmp01.idx.txt")));
+		bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("idx.txt")));
 		
 		for (File file : files) {
 			System.out.println("file:"+ file);

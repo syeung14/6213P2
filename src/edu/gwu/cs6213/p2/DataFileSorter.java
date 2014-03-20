@@ -15,10 +15,6 @@ public class DataFileSorter {
 	public DataFileSorter() {
 	}	
 	
-	public void sort() {
-		
-	}
-	
 	public void sortFileContent(String srcFile,String tmpOutFile) {
 		if (srcFile ==null || "".equals(srcFile)  ||
 				tmpOutFile ==null || "".equals(tmpOutFile)) {
@@ -38,7 +34,7 @@ public class DataFileSorter {
 
 			boolean hasMore =false;
 			do {
-				hasMore = readAndSort(br, bw); 
+				hasMore = initialSort(br, bw); 
 				if (hasMore) runCnt++;
 			} while (hasMore);
 				
@@ -60,13 +56,10 @@ public class DataFileSorter {
 		double endTime = System.currentTimeMillis();
 		
 		System.out.println("Merge Sort took:" + (endTime-startTime)/1000);
-
 		
 	}
 	
-
-	
-	private boolean readAndSort(BufferedReader br , BufferedWriter bw ) throws IOException {
+	private boolean initialSort(BufferedReader br , BufferedWriter bw ) throws IOException {
 		String[] entries = new String[MEM_SIZE];
 		String tmp = "";
 		int i = 0;
@@ -75,7 +68,7 @@ public class DataFileSorter {
 			i++;
 		} //
 
-		Arrays.sort(entries, 0, i);  //TODO internal sort could be implemented 
+		Arrays.sort(entries, 0, i);  //TODO internal sort can be implemented 
 		
 		for (String e : entries) {
 			if (e != null) {
@@ -98,7 +91,6 @@ public class DataFileSorter {
 			
 			System.out.println("done");
 		}
-		
 	}
 	
 	private void mergeFile(int run,int memSize, String partialSort, String tmpHalf, String moreSorted) {
