@@ -85,7 +85,7 @@ public class Project2Launcher {
 			}
 		} else if (data.length > 1 && "2".equals(data[0])) {
 			printStream.println(" ");
-			printStream.println("search phone number for '" + data[1] + "'");
+			printStream.println("Search phone number for '" + data[1] + "'");
 			search(data[1]);
 			printStream.println(" ");
 		} else if ("3".equals(data[0])) {

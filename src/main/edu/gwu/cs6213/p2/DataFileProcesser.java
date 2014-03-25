@@ -1,15 +1,19 @@
 package edu.gwu.cs6213.p2;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.apache.log4j.Logger;
 
@@ -65,8 +69,8 @@ public class DataFileProcesser {
 				System.out.println("Input files is not loaded.");
 			}
 			
-			String sortFsuffix = "."+Constants.SORTED+"."+inputFileExt;
-			String indFileSuffix =  "."+Constants.INDEX +"."+inputFileExt;
+			String sortFsuffix = "." + Constants.SORTED + "." + inputFileExt;
+			String indFileSuffix = "." + Constants.INDEX + "." + inputFileExt;
 			String sFileN, s1stPartN, sortedF, indexF;
 
 			for (File f : inputFiles) {
@@ -153,15 +157,41 @@ public class DataFileProcesser {
 	public void sortFileContent() {
 		loadInputFiles();
 
+		
+		final  List<Callable<Void>>  partitions  =
+				new  ArrayList<Callable<Void>>();
+		
 		for (File f : inputFiles) {
-			String srcName = f.getName();
+			final String srcName = f.getName();
 			String firstPart = FileUtil.getFileNameNoExt(srcName, "."+inputFileExt);
 			
-			String sortedFName = processedFolder+"/"+ firstPart + "."+Constants.SORTED+"."+inputFileExt;
+			final String sortedFName = processedFolder+"/"+ firstPart + "."+Constants.SORTED+"."+inputFileExt;
 			
-			doSortFileContent(srcName, sortedFName);
+			partitions.add(new Callable<Void>() {
+
+				@Override public Void call() throws Exception {
+					doSortFileContent(srcName, sortedFName);
+					return null;
+				}
+			}  );
 		}
 		
+		int processors = Runtime.getRuntime().availableProcessors();
+		ExecutorService exec = Executors.newFixedThreadPool(processors);
+		try {
+			final List<Future<Void>> sortList = exec.invokeAll(partitions);
+			
+			System.out.println("waiting...");
+			int cnt =0;
+			for (Future<Void> jobs : sortList) {
+				jobs.get();
+				cnt++;
+				System.out.println(cnt + " is back.");
+			}
+		} catch (InterruptedException | ExecutionException e) {
+			e.printStackTrace();
+		}
+				
 	}
 
 	private void loadInputFiles() {
@@ -187,8 +217,7 @@ public class DataFileProcesser {
 		srcFileName = inputFolder +"/"+srcFileName;
 		
 		int runCnt = 0;
-		try (BufferedReader br = new BufferedReader(new InputStreamReader(
-				new FileInputStream(srcFileName)), buildingBuffer);
+		try (BufferedRandomAccessFile br = new BufferedRandomAccessFile(srcFileName,"r", buildingBuffer);
 				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
 						new FileOutputStream(tmp01)));     ) {
 			System.out.println("Start to count the number of runs " + srcFileName );
@@ -225,11 +254,11 @@ public class DataFileProcesser {
 		
 	}
 	
-	private boolean initialSort(BufferedReader br , BufferedWriter bw ) throws IOException {
+	private boolean initialSort(BufferedRandomAccessFile br , BufferedWriter bw ) throws IOException {
 		String[] entries = new String[default_memSize];
 		String tmp = "";
 		int i = 0;
-		while (i < default_memSize && (tmp = br.readLine()) != null) {
+		while (i < default_memSize && (tmp = br.getNextLine()) != null) {
 			entries[i] = tmp;
 			i++;
 		} //
@@ -264,8 +293,7 @@ public class DataFileProcesser {
 	
 	private void mergeFile(int run,int memSize, String partialSort, String tmpHalf, String moreSorted) {
 		
-		try (BufferedReader src1 = new BufferedReader(new InputStreamReader(
-				new FileInputStream(partialSort)), buildingBuffer);
+		try (BufferedRandomAccessFile src1 = new BufferedRandomAccessFile(partialSort,"r", buildingBuffer);
 				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
 						new FileOutputStream(tmpHalf))) ) {
 			
@@ -276,8 +304,7 @@ public class DataFileProcesser {
 			}
 			bw.flush();
 			
-			try (BufferedReader src2 = new BufferedReader(new InputStreamReader(
-					new FileInputStream(tmpHalf)), buildingBuffer);
+			try (BufferedRandomAccessFile src2 = new BufferedRandomAccessFile(tmpHalf,"r", buildingBuffer);
 					BufferedWriter target = new BufferedWriter(new OutputStreamWriter(
 							new FileOutputStream(moreSorted))) ) {
 				
@@ -293,8 +320,8 @@ public class DataFileProcesser {
 	}
 
 	
-	private void mergeRuns(int run,int memSize, BufferedReader partialSort,
-			BufferedReader tmpHaf, BufferedWriter moreSorted)
+	private void mergeRuns(int run,int memSize, BufferedRandomAccessFile partialSort,
+			BufferedRandomAccessFile tmpHaf, BufferedWriter moreSorted)
 			throws IOException {
 		
 		for (int i = 0; i < run; i++) {
@@ -317,8 +344,8 @@ public class DataFileProcesser {
 	 * @param moreSorted
 	 * @throws IOException
 	 */
-	private void mergeSortRuns(int memSize,BufferedReader partialSort,
-			BufferedReader tmpHalf, BufferedWriter moreSorted)
+	private void mergeSortRuns(int memSize,BufferedRandomAccessFile partialSort,
+			BufferedRandomAccessFile tmpHalf, BufferedWriter moreSorted)
 			throws IOException {
 		String tmpStr1 = partialSort.readLine();  
 		String tmpStr2 = tmpHalf.readLine();

@@ -67,6 +67,10 @@ public class FileSearcher {
 			System.out.println("there is no input file loaded.");
 			return null;
 		}
+		if (key ==null || "".equals(key)) {
+			System.out.println("Search key is empty,skipped.");
+			return null;
+		}		
 		String indFileSuffix = "." + Constants.INDEX + "." + inputFileExt;
 		String sortFileSuffix = "." + Constants.SORTED + "." + inputFileExt;
 		String sFileN, s1stPartN, sortedF, indexF;
@@ -168,6 +172,10 @@ public class FileSearcher {
 	enum SearchState{SMALLER,BIGGER,FOUND,NOTFOUND};
 	private SearchResult search(String dataFileName, String indexFileName, String key) {
 		SearchResult result =null;
+		if (key ==null || "".equals(key)) {
+			System.out.println("Search key is empty,skipped.");
+			return null;
+		}
 		
 		List<Entry>idxData = idxDataMap.get(indexFileName);
 		if (idxData == null || (idxData.size() - 1) <= 0) {

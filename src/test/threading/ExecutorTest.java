@@ -30,7 +30,6 @@ public class ExecutorTest {
 			
 			System.out.println("");
 
-
 			for (int i = 0; i < 10; i++) {
 				 int a = ThreadLocalRandom.current().nextInt(100,1000);
 				 
