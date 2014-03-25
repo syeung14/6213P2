@@ -49,7 +49,7 @@ public class Project2Launcher {
 		}
 	}
 	
-	private void doRequest(String cmd, PrintStream printStream) {
+	private void doRequest(String cmd, PrintStream printStream) throws IOException {
 		if (cmd==null || "".equals(cmd.trim())) {
 			return;
 		}
@@ -149,8 +149,9 @@ public class Project2Launcher {
 	private void sortFile() {
 		fProcessor.sortFileContent();
 	}
-	private void buildIndex() {
+	private void buildIndex() throws IOException {
 		fProcessor.buildIndex();
+		fSearcher.loadInputandIndexFile();
 	}
 	
 	private void search(String key){

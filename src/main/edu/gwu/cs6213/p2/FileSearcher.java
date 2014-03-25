@@ -40,7 +40,7 @@ public class FileSearcher {
 			e.printStackTrace();
 		}
 	}
-	private void loadInputandIndexFile() throws IOException{
+	public void loadInputandIndexFile() throws IOException{
 		inputFiles = FileUtil.getAllFiles(inputFolder, inputFilePrefix, inputFileExt);
 		
 		idxDataMap = new HashMap<>();
@@ -49,7 +49,7 @@ public class FileSearcher {
 		String indFileSuffix = "." + Constants.INDEX + "." + inputFileExt;
 		for (File sf : inputFiles) {
 			sFileN = sf.getName();
-			s1stPartN = FileUtil.getFileNameNoExt(sFileN, ".txt");
+			s1stPartN = FileUtil.getFileNameNoExt(sFileN, "."+inputFileExt);
 			indexF = processedFolder + "/" + s1stPartN + indFileSuffix;
 			
 			if (new File(indexF).exists()) {
@@ -75,7 +75,7 @@ public class FileSearcher {
 		
 		for (File sf : inputFiles) {
 			sFileN = sf.getName();
-			s1stPartN = FileUtil.getFileNameNoExt(sFileN, ".txt");
+			s1stPartN = FileUtil.getFileNameNoExt(sFileN, "."+inputFileExt);
 			sortedF = processedFolder + "/" + s1stPartN + sortFileSuffix;
 			indexF = processedFolder + "/" + s1stPartN + indFileSuffix;
 			

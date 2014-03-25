@@ -21,7 +21,7 @@ public class DataFileProcesser {
 	private static final Logger logger = Logger.getLogger(DataFileProcesser.class);
 	
 	private int default_memSize = 4000;
-	private int indexBuildingBuffer = 100_000;
+	private int buildingBuffer = 100_000;
 	private String srcFileName;
 	private String sortedFileName;
 	private String indexFileName;
@@ -49,7 +49,7 @@ public class DataFileProcesser {
 	public DataFileProcesser() {
 		this.prop = PropertiesLoader.getPropertyInstance();
 		this.default_memSize = prop.getIntProperty("memory.size", 4000);
-		this.indexBuildingBuffer = prop.getIntProperty("memory.indexbuild.buffer");
+		this.buildingBuffer = prop.getIntProperty("memory.indexbuild.buffer");
 		
 		this.inputFolder = prop.getStringProperty("file.sourcefolder");
 		this.processedFolder = prop.getStringProperty("file.processedfolder");
@@ -71,7 +71,7 @@ public class DataFileProcesser {
 
 			for (File f : inputFiles) {
 				sFileN = f.getName();
-				s1stPartN = FileUtil.getFileNameNoExt(sFileN, ".txt");
+				s1stPartN = FileUtil.getFileNameNoExt(sFileN,"."+ inputFileExt);
 				sortedF = processedFolder +"/" + s1stPartN + sortFsuffix;
 				indexF = processedFolder +"/" + s1stPartN + indFileSuffix;
 				
@@ -92,7 +92,7 @@ public class DataFileProcesser {
 	
 	private void doBuildIndex2(String sortedFileName, String indexFileName){
 		
-		try (BufferedRandomAccessFile mbb = new BufferedRandomAccessFile(sortedFileName,"r",indexBuildingBuffer);
+		try (BufferedRandomAccessFile mbb = new BufferedRandomAccessFile(sortedFileName,"r",buildingBuffer);
 				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
 						new FileOutputStream(indexFileName))  )
 				){
@@ -119,6 +119,7 @@ public class DataFileProcesser {
 		}
 	}
 	
+	@Deprecated
 	private void doBuildIndex(String sortedFileName, String indexFileName){
 			
 		try (RandomAccessFile raf = new RandomAccessFile(sortedFileName, "r");
@@ -148,6 +149,7 @@ public class DataFileProcesser {
 		}		
 	}	
 
+	/*****************************************************************************************************/
 	public void sortFileContent() {
 		loadInputFiles();
 
@@ -186,7 +188,7 @@ public class DataFileProcesser {
 		
 		int runCnt = 0;
 		try (BufferedReader br = new BufferedReader(new InputStreamReader(
-				new FileInputStream(srcFileName)));
+				new FileInputStream(srcFileName)), buildingBuffer);
 				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
 						new FileOutputStream(tmp01)));     ) {
 			System.out.println("Start to count the number of runs " + srcFileName );
@@ -263,7 +265,7 @@ public class DataFileProcesser {
 	private void mergeFile(int run,int memSize, String partialSort, String tmpHalf, String moreSorted) {
 		
 		try (BufferedReader src1 = new BufferedReader(new InputStreamReader(
-				new FileInputStream(partialSort)));
+				new FileInputStream(partialSort)), buildingBuffer);
 				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
 						new FileOutputStream(tmpHalf))) ) {
 			
@@ -275,7 +277,7 @@ public class DataFileProcesser {
 			bw.flush();
 			
 			try (BufferedReader src2 = new BufferedReader(new InputStreamReader(
-					new FileInputStream(tmpHalf)));
+					new FileInputStream(tmpHalf)), buildingBuffer);
 					BufferedWriter target = new BufferedWriter(new OutputStreamWriter(
 							new FileOutputStream(moreSorted))) ) {
 				
