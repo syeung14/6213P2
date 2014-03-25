@@ -1,5 +1,6 @@
 package edu.gwu.cs6213.p2;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
@@ -10,18 +11,17 @@ import java.nio.charset.Charset;
  * @author marcoyeung
  *
  */
-public class MemoryByteBuffer {
-	
+public class MemoryBufferReader {
 
 	private byte buffer[];
 	private int bufferEnd = 0;
 	private int bufferPos = 0;
 	private Charset charset;
 	
-	public MemoryByteBuffer(byte[] buffer){
+	public MemoryBufferReader(byte[] buffer) throws FileNotFoundException{
 		this(buffer, Charset.defaultCharset());
 	}
-	public MemoryByteBuffer(byte[] buffer, Charset charset) {
+	public MemoryBufferReader(byte[] buffer, Charset charset) throws FileNotFoundException {
 		this.buffer = buffer;
 		bufferEnd = buffer.length;
 		this.charset = charset;
@@ -71,7 +71,11 @@ public class MemoryByteBuffer {
 		return str;
 	}
 	
-	private int read() {
+	public long getPointer(){
+		return bufferPos;
+	}
+	
+	public int read() {
 
 		if (bufferEnd == 0 || bufferPos >= bufferEnd) {
 			return -1;

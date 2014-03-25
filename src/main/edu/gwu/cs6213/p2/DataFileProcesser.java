@@ -21,6 +21,7 @@ public class DataFileProcesser {
 	private static final Logger logger = Logger.getLogger(DataFileProcesser.class);
 	
 	private int default_memSize = 4000;
+	private int indexBuildingBuffer = 100_000;
 	private String srcFileName;
 	private String sortedFileName;
 	private String indexFileName;
@@ -48,6 +49,7 @@ public class DataFileProcesser {
 	public DataFileProcesser() {
 		this.prop = PropertiesLoader.getPropertyInstance();
 		this.default_memSize = prop.getIntProperty("memory.size", 4000);
+		this.indexBuildingBuffer = prop.getIntProperty("memory.indexbuild.buffer");
 		
 		this.inputFolder = prop.getStringProperty("file.sourcefolder");
 		this.processedFolder = prop.getStringProperty("file.processedfolder");
@@ -58,6 +60,7 @@ public class DataFileProcesser {
 
 	public void buildIndex() {
 		try {
+			loadInputFiles();
 			if (inputFiles==null) {
 				System.out.println("Input files is not loaded.");
 			}
@@ -76,7 +79,7 @@ public class DataFileProcesser {
 					System.out.println("Sorted file not found, index is not created. " + sortedF );
 				}else {
 					System.out.println("Building index for " + sortedF);
-					doBuildIndex(sortedF, indexF);
+					doBuildIndex2(sortedF, indexF);
 					System.out.println("=====================================");
 				}
 			}
@@ -85,6 +88,37 @@ public class DataFileProcesser {
 		}
 		
 	}
+	
+	
+	private void doBuildIndex2(String sortedFileName, String indexFileName){
+		
+		try (BufferedRandomAccessFile mbb = new BufferedRandomAccessFile(sortedFileName,"r",indexBuildingBuffer);
+				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
+						new FileOutputStream(indexFileName))  )
+				){
+			
+			long pter =  mbb.getFilePointer();
+			
+			double startTime = System.currentTimeMillis();
+			String tmp,name[];
+			int cnt = 0;
+			while (  (tmp = mbb.getNextLine()) != null)  {
+
+				if ( cnt++ % default_memSize == 0) {
+					name = tmp.split(",");
+					bw.write(name[0]+ "," +pter);
+					bw.newLine();
+				}
+				pter =  mbb.getFilePointer();;
+			}
+			double endTime = System.currentTimeMillis();
+			System.out.println("Index "+indexFileName+" is created took:" + (endTime-startTime)/1000 +" s");
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 	private void doBuildIndex(String sortedFileName, String indexFileName){
 			
 		try (RandomAccessFile raf = new RandomAccessFile(sortedFileName, "r");
@@ -115,13 +149,7 @@ public class DataFileProcesser {
 	}	
 
 	public void sortFileContent() {
-		try {
-			inputFiles = FileUtil.getAllFiles(inputFolder, inputFilePrefix, inputFileExt);
-			System.out.println("Number of input files: "+ inputFiles.length);
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		loadInputFiles();
 
 		for (File f : inputFiles) {
 			String srcName = f.getName();
@@ -132,6 +160,16 @@ public class DataFileProcesser {
 			doSortFileContent(srcName, sortedFName);
 		}
 		
+	}
+
+	private void loadInputFiles() {
+		try {
+			inputFiles = FileUtil.getAllFiles(inputFolder, inputFilePrefix, inputFileExt);
+			System.out.println("Number of input files: "+ inputFiles.length);
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	private void doSortFileContent(String srcFileName, String sortedFileName){
 		

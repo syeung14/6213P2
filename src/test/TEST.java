@@ -21,9 +21,13 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.PriorityQueue;
 
-import edu.gwu.cs6213.p2.MemoryByteBuffer;
+import edu.gwu.cs6213.p2.MemoryBufferReader;
 
 public class TEST {
 	private static void readLine(String fileName){
@@ -203,6 +207,38 @@ public class TEST {
 	}
 
 
+	private static void searchInBlock(String dataFile, long startPos, long endPos, String key) {
+		
+		try (RandomAccessFile raf = new RandomAccessFile(dataFile, "r");){
+			byte []block = new byte[ (int)(endPos-startPos) ];
+
+			raf.seek(startPos);
+			raf.read(block);
+			
+			MemoryBufferReader bb = new MemoryBufferReader(block);
+			
+			String tmp= "";
+			String []data={"",""};
+			int cnt=0;
+			boolean found =false;
+			while ((tmp = bb.getNextLine()) != null) {
+				data = tmp.split(",");
+				cnt++;
+				
+				if (key.compareTo(data[0]) == 0) {
+					found = true;
+					break;
+				}
+			}
+			tmp = found?" record found " + data[1]:" record not found";
+			System.out.println("total line:"+cnt+" :"+tmp);
+
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+	}
 	
 	private static class Entry{
 		private String name;
@@ -348,6 +384,61 @@ public class TEST {
 		}
 		
 	}
+	
+	private static void testQueue() {
+		PriorityQueue<String> tmpList;
+		tmpList = new PriorityQueue<>(1, 
+		
+		new Comparator<String>() {
+			@Override
+			public int compare(String o1, String o2) {
+				return o1.compareTo(o2);
+			}
+
+		});
+
+		tmpList.offer("Ach Issauth,127-718-3234");
+		tmpList.offer("Beib Jttitt,234-166-4994");
+		tmpList.offer("Bech Oig,482-651-2141");
+		tmpList.offer("25-9240");
+		tmpList.offer("Aw Iowoh,329-171-2334");
+
+		for (String string : tmpList) {
+			System.out.println(string);
+		}
+		System.out.println("");
+		while(tmpList.size()>0)
+			System.out.println(tmpList.poll());
+		
+		String names[] = {"Ach","Beib","Bech","25-9240","Aw"};
+		
+		Collections.sort(Arrays.asList(names),defaultcomparator);
+		System.out.println("");
+		/*for (String n : names) {
+			System.out.println(n);
+		}*/
+		
+	}
+    public static Comparator<String> defaultcomparator = new Comparator<String>() {
+        @Override
+        public int compare(String r1, String r2) {
+                return r1.compareTo(r2);
+        }
+    };
+	
+    private static void testArray() {
+
+    	String data[] = {"Ach","Beib","Bech","25-9240","Aw"};
+    	
+    	String sub[] = new String[3];
+    	System.arraycopy(data, 1, sub, 0, 3);
+    	
+    	for (String s : sub) {
+			System.out.println(s);
+		}
+
+	}
+	
 	public static void main(String[] args) {
 		try {
 			//TEST.initializeSegments(10, "largedata.dat", "sorting.txt");
@@ -362,7 +453,7 @@ public class TEST {
 			
 //			TEST.loadIndex("4m_datafile.idx.txt");
 //			TEST.search("4m_datafile.sorted.txt" ,"Autev Fauzynt");
-			TEST.testParse();
+			TEST.testArray();
 			
 //			TEST.searchInBlock("400K_sorted.txt",2759734,2867194);
 			
@@ -373,37 +464,5 @@ public class TEST {
 		
 	
 	
-	private static void searchInBlock(String dataFile, long startPos, long endPos, String key) {
-		
-		try (RandomAccessFile raf = new RandomAccessFile(dataFile, "r");){
-			byte []block = new byte[ (int)(endPos-startPos) ];
-
-			raf.seek(startPos);
-			raf.read(block);
-			
-			MemoryByteBuffer bb = new MemoryByteBuffer(block);
-			
-			String tmp= "";
-			String []data={"",""};
-			int cnt=0;
-			boolean found =false;
-			while ((tmp = bb.getNextLine()) != null) {
-				data = tmp.split(",");
-				cnt++;
-				
-				if (key.compareTo(data[0]) == 0) {
-					found = true;
-					break;
-				}
-			}
-			tmp = found?" record found " + data[1]:" record not found";
-			System.out.println("total line:"+cnt+" :"+tmp);
-
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-	}
 
 }

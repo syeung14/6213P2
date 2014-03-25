@@ -6,13 +6,18 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
+import org.apache.log4j.Logger;
+
 public class Project2Launcher {
+	private static final Logger logger = Logger.getLogger(Project2Launcher.class);
+
 	private String[] availableTask = {
 			"\t Project 2 menu",
 			"\t ===================================================================",
 			"\t Please type '1' to pre-process input files (sort input file and build indexes)",
 			"\t Please type '2 <name>' to perform search (full name case sensitive)",
-			"\t Please type '3' to reload index files to memory",
+			"\t Please type '3' to rebuild index files",
+			"\t Please type '4' to reload index files to memory",
 			"\t Please type 'exit' to quit the console" 
 			};
 
@@ -20,7 +25,7 @@ public class Project2Launcher {
 	private DataFileProcesser fProcessor;
 	private FileSearcher fSearcher;
 	
-	private Project2Launcher(String srcFile,String sortFile) {
+	private Project2Launcher() {
 		
 		fProcessor = new DataFileProcesser();
 		fSearcher = new FileSearcher();
@@ -71,7 +76,6 @@ public class Project2Launcher {
 		String[] data = { request, name };
 		
 		if ("1".equals(data[0])) {
-			
 			try {
 				printStream.println(" ");
 				loadFile();
@@ -79,7 +83,16 @@ public class Project2Launcher {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+		} else if (data.length > 1 && "2".equals(data[0])) {
+			printStream.println(" ");
+			printStream.println("search phone number for '" + data[1] + "'");
+			search(data[1]);
+			printStream.println(" ");
 		} else if ("3".equals(data[0])) {
+			printStream.println(" ");
+			buildIndex();
+			printStream.println(" ");
+		} else if ("4".equals(data[0])) {
 			printStream.println(" ");
 			fSearcher = new FileSearcher();
 			printStream.println("\t Index files are re-loaded.");
@@ -87,11 +100,6 @@ public class Project2Launcher {
 		} else if (data.length >1 && "9".equals(data[0]) && numRecords>0) {
 			printStream.println(" ");
 			FileUtil.phoneBookGen(name, numRecords);
-			printStream.println(" ");
-		} else if (data.length >1 && "2".equals(data[0])) {
-			printStream.println(" ");
-			printStream.println("search phone number for '" + data[1] + "'");
-			search(data[1]);
 			printStream.println(" ");
 		} else if (data[0].equalsIgnoreCase("h")) {
 			userOptions(printStream);
@@ -134,9 +142,15 @@ public class Project2Launcher {
 	}
 	
 	private void loadFile() throws IOException {
+		sortFile();
+		buildIndex();
+	}
+	
+	private void sortFile() {
 		fProcessor.sortFileContent();
+	}
+	private void buildIndex() {
 		fProcessor.buildIndex();
-		
 	}
 	
 	private void search(String key){
@@ -150,10 +164,11 @@ public class Project2Launcher {
 		String fileName = "largedata0.txt";
 		String tmpOutFile = "largedata0.sorted.txt";
 		
-		Project2Launcher launcher = new Project2Launcher(fileName, tmpOutFile);
+		Project2Launcher launcher = new Project2Launcher();
 		try {
-//			launcher.loadFile();
+//			launcher.buildIndex();
 //			launcher.search("Ab Aus");
+			logger.debug("Program started.");
 			
 			launcher.doRequest();
 			

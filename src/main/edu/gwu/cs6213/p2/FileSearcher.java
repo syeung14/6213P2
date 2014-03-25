@@ -140,7 +140,7 @@ public class FileSearcher {
 			raf.seek(startPos);
 			raf.read(block);
 			
-			MemoryByteBuffer bb = new MemoryByteBuffer(block);
+			MemoryBufferReader bb = new MemoryBufferReader(block);
 			
 			String tmp= "";
 			String []data={"",""};
