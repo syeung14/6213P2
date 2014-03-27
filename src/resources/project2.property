@@ -1,7 +1,8 @@
 #block size
 memory.size=10000
-memory.indexbuild.buffer=10000001
+memory.indexbuild.buffer=100000001
+memory.externalsort.buffer=50000001
 file.sourcefolder=input
-file.processedfolder=processed
+file.processedfolder=deploy/processed
 file.input.prefix=inputfile
 file.input.ext=txt

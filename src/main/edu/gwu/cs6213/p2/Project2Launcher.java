@@ -147,7 +147,7 @@ public class Project2Launcher {
 	}
 	
 	private void sortFile() {
-		fProcessor.sortFileContent();
+		fProcessor.sortFileContentSeq();
 	}
 	private void buildIndex() throws IOException {
 		fProcessor.buildIndex();

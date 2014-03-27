@@ -17,6 +17,7 @@ import java.util.concurrent.Future;
 
 import org.apache.log4j.Logger;
 
+import edu.gwu.cs6213.p2.util.ExternalSort;
 import edu.gwu.cs6213.p2.util.PropertiesLoader;
 import edu.gwu.cs6213.p2.util.PropertiesParser;
 
@@ -26,6 +27,7 @@ public class DataFileProcesser {
 	
 	private int default_memSize = 4000;
 	private int buildingBuffer = 100_000;
+	private int externalSortBuffer = 1_000_000;
 	private String srcFileName;
 	private String sortedFileName;
 	private String indexFileName;
@@ -53,6 +55,7 @@ public class DataFileProcesser {
 	public DataFileProcesser() {
 		this.prop = PropertiesLoader.getPropertyInstance();
 		this.default_memSize = prop.getIntProperty("memory.size", 4000);
+		this.externalSortBuffer = prop.getIntProperty("memory.externalsort.buffer");
 		this.buildingBuffer = prop.getIntProperty("memory.indexbuild.buffer");
 		
 		this.inputFolder = prop.getStringProperty("file.sourcefolder");
@@ -98,7 +101,7 @@ public class DataFileProcesser {
 		
 		try (BufferedRandomAccessFile mbb = new BufferedRandomAccessFile(sortedFileName,"r",buildingBuffer);
 				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
-						new FileOutputStream(indexFileName))  )
+						new FileOutputStream(indexFileName)));
 				){
 			
 			long pter =  mbb.getFilePointer();
@@ -154,12 +157,47 @@ public class DataFileProcesser {
 	}	
 
 	/*****************************************************************************************************/
-	public void sortFileContent() {
-		loadInputFiles();
+	/*****************************************************************************************************/
+	/*****************************************************************************************************/
 
+	/**
+	 * @deprecated
+	 * External sort from 3rd file, reference only
+	 */
+	public void sortFileContentSeq() {
+		loadInputFiles();
 		
-		final  List<Callable<Void>>  partitions  =
-				new  ArrayList<Callable<Void>>();
+		for (File f : inputFiles) {
+			final String srcName = f.getName();
+			String firstPart = FileUtil.getFileNameNoExt(srcName, "."+inputFileExt);
+
+			final String sortedFName = processedFolder+"/"+ firstPart + "."+Constants.SORTED+"."+inputFileExt;
+
+			try {
+				double startTime = System.currentTimeMillis();
+				System.out.println("sorting:"+ srcName);
+				
+				ExternalSort.sort(new File(inputFolder +"/"+srcName), new File(sortedFName), new File(processedFolder));
+				
+				double endTime = System.currentTimeMillis();
+				System.out.println("External Merge Sort took:" + (endTime - startTime) / 1000 +" s");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+		}
+	}
+	
+	
+	/**
+	 * @deprecated
+	 * Sorted file with external sort in a thread pool
+	 * The external sort with lots of I/O and only 3 temp files is too slow
+	 */
+	public void sortFileContentExec() {
+		loadInputFiles();
+		
+		final List<Callable<Void>> partitions = new ArrayList<Callable<Void>>();
 		
 		for (File f : inputFiles) {
 			final String srcName = f.getName();
@@ -177,7 +215,7 @@ public class DataFileProcesser {
 		}
 		
 		int processors = Runtime.getRuntime().availableProcessors();
-		ExecutorService exec = Executors.newFixedThreadPool(processors);
+		ExecutorService exec = Executors.newFixedThreadPool(processors-1);
 		try {
 			final List<Future<Void>> sortList = exec.invokeAll(partitions);
 			
@@ -217,9 +255,9 @@ public class DataFileProcesser {
 		srcFileName = inputFolder +"/"+srcFileName;
 		
 		int runCnt = 0;
-		try (BufferedRandomAccessFile br = new BufferedRandomAccessFile(srcFileName,"r", buildingBuffer);
+		try (BufferedRandomAccessFile br = new BufferedRandomAccessFile(srcFileName,"r", externalSortBuffer);
 				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
-						new FileOutputStream(tmp01)));     ) {
+						new FileOutputStream(tmp01)));   ) {
 			System.out.println("Start to count the number of runs " + srcFileName );
 
 			boolean hasMore =false;
@@ -293,7 +331,7 @@ public class DataFileProcesser {
 	
 	private void mergeFile(int run,int memSize, String partialSort, String tmpHalf, String moreSorted) {
 		
-		try (BufferedRandomAccessFile src1 = new BufferedRandomAccessFile(partialSort,"r", buildingBuffer);
+		try (BufferedRandomAccessFile src1 = new BufferedRandomAccessFile(partialSort,"r", externalSortBuffer);
 				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
 						new FileOutputStream(tmpHalf))) ) {
 			
@@ -304,7 +342,7 @@ public class DataFileProcesser {
 			}
 			bw.flush();
 			
-			try (BufferedRandomAccessFile src2 = new BufferedRandomAccessFile(tmpHalf,"r", buildingBuffer);
+			try (BufferedRandomAccessFile src2 = new BufferedRandomAccessFile(tmpHalf,"r", externalSortBuffer);
 					BufferedWriter target = new BufferedWriter(new OutputStreamWriter(
 							new FileOutputStream(moreSorted))) ) {
 				

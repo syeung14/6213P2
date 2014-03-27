@@ -4,9 +4,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
 
@@ -43,7 +45,7 @@ public class FileSearcher {
 	public void loadInputandIndexFile() throws IOException{
 		inputFiles = FileUtil.getAllFiles(inputFolder, inputFilePrefix, inputFileExt);
 		
-		idxDataMap = new HashMap<>();
+		idxDataMap = new ConcurrentHashMap<String, List<Entry>>();
 		List<Entry> entry;
 		String sFileN, s1stPartN, indexF;
 		String indFileSuffix = "." + Constants.INDEX + "." + inputFileExt;
@@ -70,14 +72,36 @@ public class FileSearcher {
 		if (key ==null || "".equals(key)) {
 			System.out.println("Search key is empty,skipped.");
 			return null;
-		}		
+		}
 		String indFileSuffix = "." + Constants.INDEX + "." + inputFileExt;
 		String sortFileSuffix = "." + Constants.SORTED + "." + inputFileExt;
 		String sFileN, s1stPartN, sortedF, indexF;
 		SearchResult result = null;
 		logger.debug("============In Search method "+key+"=======================");
 		
-		for (File sf : inputFiles) {
+		//arrange the search sequence on the index files
+		int len = inputFiles.length;
+		Integer[] searchSeq = new Integer[len];
+		if (len == 1) {
+			searchSeq =new Integer[]{0};
+		} else if (len == 2) {
+			searchSeq =new Integer[]{0,1};
+		} else {
+			int mid = len/2;
+			searchSeq[0] = 0;
+			searchSeq[1] = len-1;
+			searchSeq[2] = mid;
+
+			for (int i=1,j=3;i < mid;i++) {
+				searchSeq[j++] = mid-i;
+				if (j<len) searchSeq[j++] = mid+i;
+			}
+		}
+//		System.out.println(Arrays.asList(searchSeq));
+		
+		for (int i : searchSeq) {
+			File sf = inputFiles[i];
+			
 			sFileN = sf.getName();
 			s1stPartN = FileUtil.getFileNameNoExt(sFileN, "."+inputFileExt);
 			sortedF = processedFolder + "/" + s1stPartN + sortFileSuffix;
@@ -96,8 +120,6 @@ public class FileSearcher {
 				return result;
 			}
 		}
-		
-
 		
 		return result;
 	}
@@ -235,7 +257,7 @@ public class FileSearcher {
 			startPos = anchor.byteLocation;
 			endPos = endAnchor.byteLocation;
 		} else if (state== SearchState.NOTFOUND) {
-			System.out.println("name is not in index");
+			logger.debug("name is not in index: " + key);
 		}
 		if (endPos>0) {
 			logger.debug("Searching " + dataFileName + " with anchor.");
@@ -244,7 +266,7 @@ public class FileSearcher {
 			endTime = System.currentTimeMillis();
 			logger.debug("Search in data file took:" + (endTime-startTime) +" ms");
 		} else {
-			System.out.println("search is not performed.");
+			logger.debug("search is not performed.  " + key);
 		}
 		return result;
 	}

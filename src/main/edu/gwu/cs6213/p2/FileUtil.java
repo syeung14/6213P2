@@ -10,14 +10,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import edu.gwu.cs6213.p2.util.ExternalSort;
 import edu.gwu.cs6213.p2.util.NameGenerator;
 
 public class FileUtil {
 
 	
-	public static void main(String[] args) {
-		System.out.println(FileUtil.getFileNameNoExt("this porar.txt","r.txt"));
-	}
 	public static String getFileNameNoExt(String fileName, String suffix){
 		
 		if (fileName==null ||"".equals(fileName) || !fileName.endsWith(suffix) ) {
@@ -57,11 +55,25 @@ public class FileUtil {
 	
 	
 	
+	public static void otherExternalSort() {
+		ExternalSort sort = new ExternalSort();
+		try {
+			sort.sort(new File(""),new File(""));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	
-	
-	
-	
-	
+	public static void main(String[] args) {
+//		9 input/inputfile.107.txt#35000000
+		
+		String fileName = "input/inputfile.";
+
+		for(int i = 107; i< 121; i++) {
+			phoneBookGen(fileName + i+".txt", 35000000);
+		}
+	}
 	public static void phoneBookGen(String fileName, int size) {
 		
 		try (BufferedWriter osw= new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName)));) {

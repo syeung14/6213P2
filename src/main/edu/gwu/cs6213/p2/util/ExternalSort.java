@@ -1,4 +1,4 @@
-package com.google.code.externalsorting;
+package edu.gwu.cs6213.p2.util;
 
 // filename: ExternalSort.java
 import java.io.BufferedReader;
@@ -66,10 +66,13 @@ public class ExternalSort {
          * 
          */
         public static void sort(File input, File output) throws IOException {
-                ExternalSort.mergeSortedFiles(ExternalSort.sortInBatch(input),output);
+        	ExternalSort.mergeSortedFiles(ExternalSort.sortInBatch(input),output);
         }
 
         
+        public static void sort(File input, File output, File tmpdirectory) throws IOException { 
+        	ExternalSort.mergeSortedFiles(ExternalSort.sortInBatch(input,tmpdirectory),output);
+        }
 
         static int DEFAULTMAXTEMPFILES = 1024;
 
@@ -118,6 +121,13 @@ public class ExternalSort {
                 return sortInBatch(file, defaultcomparator, DEFAULTMAXTEMPFILES,
                         Charset.defaultCharset(), null, false);
         }
+        
+        public static List<File> sortInBatch(File file, File tmpdirectory) throws IOException {
+        	
+            return sortInBatch(file, defaultcomparator, DEFAULTMAXTEMPFILES,
+                    Charset.defaultCharset(), tmpdirectory, false);
+        }
+        
         /**
          * This will simply load the file by blocks of lines, then sort them
          * in-memory, and write the result to temporary files that have to be
@@ -185,9 +195,9 @@ public class ExternalSort {
                 int maxtmpfiles, Charset cs, File tmpdirectory,
                 boolean distinct, int numHeader, boolean usegzip)
                 throws IOException {
+        	
                 List<File> files = new ArrayList<File>();
-                BufferedReader fbr = new BufferedReader(new InputStreamReader(
-                        new FileInputStream(file), cs));
+                BufferedReader fbr = new BufferedReader(new InputStreamReader(new FileInputStream(file), cs));
                 long blocksize = estimateBestSizeOfBlocks(file, maxtmpfiles);// in
                                                                              // bytes
 
@@ -403,35 +413,28 @@ public class ExternalSort {
         public static int mergeSortedFiles(List<File> files, File outputfile,
                 final Comparator<String> cmp, Charset cs, boolean distinct,
                 boolean append, boolean usegzip) throws IOException {
-                PriorityQueue<BinaryFileBuffer> pq = new PriorityQueue<BinaryFileBuffer>(
-                        11, new Comparator<BinaryFileBuffer>() {
-                                @Override
-                                public int compare(BinaryFileBuffer i,
-                                        BinaryFileBuffer j) {
-                                        return cmp.compare(i.peek(), j.peek());
-                                }
-                        });
-                ArrayList<BinaryFileBuffer> bfbs = new ArrayList<BinaryFileBuffer>();
-                for (File f : files) {
-                        final int BUFFERSIZE = 2048;
-                        InputStream in = new FileInputStream(f);
-                        BufferedReader br;
-                        if (usegzip) {
-                                br = new BufferedReader(new InputStreamReader(
-                                        new GZIPInputStream(in, BUFFERSIZE), cs));
-                        } else {
-                                br = new BufferedReader(new InputStreamReader(in,
-                                        cs));
-                        }
 
-                        BinaryFileBuffer bfb = new BinaryFileBuffer(br);
-                        bfbs.add(bfb);
-                }
-                BufferedWriter fbw = new BufferedWriter(new OutputStreamWriter(
-                        new FileOutputStream(outputfile, append), cs));
-                int rowcounter = merge(fbw,cmp,distinct, bfbs);
-                for (File f : files) f.delete();
-                return rowcounter;
+        	ArrayList<BinaryFileBuffer> bfbs = new ArrayList<BinaryFileBuffer>();
+        	for (File f : files) {
+        		final int BUFFERSIZE = 2048;
+        		InputStream in = new FileInputStream(f);
+        		BufferedReader br;
+        		if (usegzip) {
+        			br = new BufferedReader(new InputStreamReader(
+        					new GZIPInputStream(in, BUFFERSIZE), cs));
+        		} else {
+        			br = new BufferedReader(new InputStreamReader(in,
+        					cs));
+        		}
+
+        		BinaryFileBuffer bfb = new BinaryFileBuffer(br);
+        		bfbs.add(bfb);
+        	}
+        	BufferedWriter fbw = new BufferedWriter(new OutputStreamWriter(
+        			new FileOutputStream(outputfile, append), cs));
+        	int rowcounter = merge(fbw,cmp,distinct, bfbs);
+        	for (File f : files) f.delete();
+        	return rowcounter;
         }
         /**
          * This merges several BinaryFileBuffer to an output writer.
@@ -449,42 +452,43 @@ public class ExternalSort {
          * 
          */        
         public static int merge(BufferedWriter fbw, final Comparator<String> cmp, boolean distinct, List<BinaryFileBuffer> buffers) throws IOException {
-                PriorityQueue<BinaryFileBuffer> pq = new PriorityQueue<BinaryFileBuffer>(
-                        11, new Comparator<BinaryFileBuffer>() {
-                                @Override
-                                public int compare(BinaryFileBuffer i,
-                                        BinaryFileBuffer j) {
-                                        return cmp.compare(i.peek(), j.peek());
-                                }
-                        });
-                for (BinaryFileBuffer bfb: buffers)
-                        if(!bfb.empty())
-                                pq.add(bfb);
-                int rowcounter = 0;
-                String lastLine = null;
-                try {
-                        while (pq.size() > 0) {
-                                BinaryFileBuffer bfb = pq.poll();
-                                String r = bfb.pop();
-                                // Skip duplicate lines
-                                if (!distinct || !r.equals(lastLine)) {
-                                        fbw.write(r);
-                                        fbw.newLine();
-                                        lastLine = r;
-                                }
-                                ++rowcounter;
-                                if (bfb.empty()) {
-                                        bfb.fbr.close();
-                                } else {
-                                        pq.add(bfb); // add it back
-                                }
-                        }
-                } finally {
-                        fbw.close();
-                        for (BinaryFileBuffer bfb : pq)
-                                bfb.close();
-                }
-                return rowcounter;
+
+        	PriorityQueue<BinaryFileBuffer> pq = new PriorityQueue<BinaryFileBuffer>(
+        			11, new Comparator<BinaryFileBuffer>() {
+        				@Override
+        				public int compare(BinaryFileBuffer i,
+        						BinaryFileBuffer j) {
+        					return cmp.compare(i.peek(), j.peek());
+        				}
+        			});
+        	for (BinaryFileBuffer bfb: buffers)
+        		if(!bfb.empty())
+        			pq.add(bfb);
+        	int rowcounter = 0;
+        	String lastLine = null;
+        	try {
+        		while (pq.size() > 0) {
+        			BinaryFileBuffer bfb = pq.poll();
+        			String r = bfb.pop();
+        			// Skip duplicate lines
+        			if (!distinct || !r.equals(lastLine)) {
+        				fbw.write(r);
+        				fbw.newLine();
+        				lastLine = r;
+        			}
+        			++rowcounter;
+        			if (bfb.empty()) {
+        				bfb.fbr.close();
+        			} else {
+        				pq.add(bfb); // add it back
+        			}
+        		}
+        	} finally {
+        		fbw.close();
+        		for (BinaryFileBuffer bfb : pq)
+        			bfb.close();
+        	}
+        	return rowcounter;
 
         }
 
@@ -528,6 +532,7 @@ public class ExternalSort {
          */
         public static int mergeSortedFiles(List<File> files, File outputfile,
                 final Comparator<String> cmp, Charset cs) throws IOException {
+        	
                 return mergeSortedFiles(files, outputfile, cmp, cs, false);
         }
 
@@ -613,20 +618,16 @@ public class ExternalSort {
                         }
                 }
                 if (outputfile == null) {
-                        System.out
-                                .println("please provide input and output file names");
+                        System.out.println("please provide input and output file names");
                         displayUsage();
                         return;
                 }
                 Comparator<String> comparator = defaultcomparator;
-                List<File> l = sortInBatch(new File(inputfile), comparator,
-                        maxtmpfiles, cs, tempFileStore, distinct, headersize,
+                List<File> l = sortInBatch(new File(inputfile), comparator, maxtmpfiles, cs, tempFileStore, distinct, headersize,
                         usegzip);
-                if (verbose)
-                        System.out
-                                .println("created " + l.size() + " tmp files");
-                mergeSortedFiles(l, new File(outputfile), comparator, cs,
-                        distinct, false, usegzip);
+                if (verbose) System.out .println("created " + l.size() + " tmp files");
+                
+                mergeSortedFiles(l, new File(outputfile), comparator, cs, distinct, false, usegzip);
                 
                 double endTim = System.currentTimeMillis();
                 System.out.println("took:" + (endTim - startTim) /1000 +" s");
@@ -643,48 +644,48 @@ public class ExternalSort {
 
 
 class BinaryFileBuffer {
-        public BufferedReader fbr;
-        private String cache;
-        private boolean empty;
+	public BufferedReader fbr;
+	private String cache;
+	private boolean empty;
 
-        public BinaryFileBuffer(BufferedReader r)
-                throws IOException {
-                this.fbr = r;
-                reload();
-        }
+	public BinaryFileBuffer(BufferedReader r)
+			throws IOException {
+		this.fbr = r;
+		reload();
+	}
 
-        public boolean empty() {
-                return this.empty;
-        }
+	public boolean empty() {
+		return this.empty;
+	}
 
-        private void reload() throws IOException {
-                try {
-                        if ((this.cache = this.fbr.readLine()) == null) {
-                                this.empty = true;
-                                this.cache = null;
-                        } else {
-                                this.empty = false;
-                        }
-                } catch (EOFException oef) {
-                        this.empty = true;
-                        this.cache = null;
-                }
-        }
+	private void reload() throws IOException {
+		try {
+			if ((this.cache = this.fbr.readLine()) == null) {
+				this.empty = true;
+				this.cache = null;
+			} else {
+				this.empty = false;
+			}
+		} catch (EOFException oef) {
+			this.empty = true;
+			this.cache = null;
+		}
+	}
 
-        public void close() throws IOException {
-                this.fbr.close();
-        }
+	public void close() throws IOException {
+		this.fbr.close();
+	}
 
-        public String peek() {
-                if (empty())
-                        return null;
-                return this.cache.toString();
-        }
+	public String peek() {
+		if (empty())
+			return null;
+		return this.cache.toString();
+	}
 
-        public String pop() throws IOException {
-                String answer = peek();
-                reload();
-                return answer;
-        }
+	public String pop() throws IOException {
+		String answer = peek();
+		reload();
+		return answer;
+	}
 
 }

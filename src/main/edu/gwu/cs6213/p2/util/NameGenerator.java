@@ -17,13 +17,13 @@ public class NameGenerator {
 		String demoStartConsonants[] = { "b", "c", "d", "f", "g", "h", "k",
 				"l", "m", "n", "p", "q", "r", "s", "t", "v", "w", "x", "z",
 				"ch", "bl", "br", "fl", "gl", "gr", "kl", "pr", "st", "sh",
-				"th" };
+				"th","rg","rb","rg","lk","ht","br","pqc"};
 
 		String demoEndConsonants[] = { "b", "d", "f", "g", "h", "k", "l", "m",
 				"n", "p", "r", "s", "t", "v", "w", "z", "ch", "gh", "nn", "st",
-				"sh", "th", "tt", "ss", "pf", "nt" };
+				"sh", "th", "tt", "ss", "pf", "nt","ai","ia","ei","ui","hc","lb","lf","kai","lg","ld","rp","ts","hs" };
 
-		String nameInstructions[] = { "vd", "cvdvd", "cvd", "vdvd" };
+		String nameInstructions[] = { "vdv", "vdcvdc", "vdc", "cvdvd", "cvd","cvdcvd","cvcd","cdvcdcd", "vdvd" };
 
 		this.vocals.addAll(Arrays.asList(demoVocals));
 		this.startConsonants.addAll(Arrays.asList(demoStartConsonants));

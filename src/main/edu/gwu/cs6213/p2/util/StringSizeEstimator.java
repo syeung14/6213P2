@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.google.code.externalsorting;
+package edu.gwu.cs6213.p2.util;
 
 /**
  * @author Eleftherios Chetzakis
