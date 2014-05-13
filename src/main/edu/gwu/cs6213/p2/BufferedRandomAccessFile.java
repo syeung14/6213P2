@@ -3,7 +3,6 @@ package edu.gwu.cs6213.p2;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.io.ObjectInputStream.GetField;
 import java.nio.charset.Charset;
 
 /**
@@ -15,7 +14,7 @@ import java.nio.charset.Charset;
  * 
  * Parse Byte Array and return line by line
  * 
- * @author marcoyeung
+ * @author Marcoyeung
  *
  */
 public class BufferedRandomAccessFile extends RandomAccessFile {

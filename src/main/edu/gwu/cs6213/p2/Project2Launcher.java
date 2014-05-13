@@ -98,6 +98,7 @@ public class Project2Launcher {
 			printStream.println("\t Index files are re-loaded.");
 			printStream.println(" ");
 		} else if (data.length >1 && "9".equals(data[0]) && numRecords>0) {
+			//9 input/input01.txt#10000
 			printStream.println(" ");
 			FileUtil.phoneBookGen(name, numRecords);
 			printStream.println(" ");

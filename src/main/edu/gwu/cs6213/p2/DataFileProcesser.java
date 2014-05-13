@@ -74,7 +74,7 @@ public class DataFileProcesser {
 			
 			String sortFsuffix = "." + Constants.SORTED + "." + inputFileExt;
 			String indFileSuffix = "." + Constants.INDEX + "." + inputFileExt;
-			String sFileN, s1stPartN, sortedF, indexF;
+			/*String sFileN, s1stPartN, sortedF, indexF;
 
 			for (File f : inputFiles) {
 				sFileN = f.getName();
@@ -89,7 +89,46 @@ public class DataFileProcesser {
 					doBuildIndex2(sortedF, indexF);
 					System.out.println("=====================================");
 				}
+			}*/
+			
+			
+			final List<Callable<Void>> partitions = new ArrayList<Callable<Void>>();
+			
+			String sFileN, s1stPartN;
+			for (File f : inputFiles) {
+				sFileN = f.getName();
+				s1stPartN = FileUtil.getFileNameNoExt(sFileN,"."+ inputFileExt);
+				final String sortedF = processedFolder +"/" + s1stPartN + sortFsuffix;
+				final String indexF = processedFolder +"/" + s1stPartN + indFileSuffix;
+				partitions.add(new Callable<Void>() {
+					
+					@Override public Void call() throws Exception {
+						if (! new File(sortedF).isFile()) {
+							System.out.println("Sorted file not found, index is not created. " + sortedF );
+						}else {
+							System.out.println("Building index for " + sortedF);
+							doBuildIndex2(sortedF, indexF);
+							System.out.println("=====================================");
+						}
+						return null;
+					}
+				});
 			}
+			
+			int processors = Runtime.getRuntime().availableProcessors();
+			ExecutorService exec = Executors.newFixedThreadPool(processors-1);
+			try {
+				final List<Future<Void>> sortList = exec.invokeAll(partitions);
+				
+				int cnt =0;
+				for (Future<Void> jobs : sortList) {
+					jobs.get();
+					cnt++;
+				}
+			} catch (InterruptedException | ExecutionException e) {
+				e.printStackTrace();
+			}
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -1,33 +1,26 @@
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
-import java.io.OutputStreamWriter;
-import java.io.RandomAccessFile;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.Queue;
+import java.util.Stack;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.PriorityBlockingQueue;
 
-import edu.gwu.cs6213.p2.MemoryBufferReader;
+import javax.xml.ws.Action;
+
+import edu.gwu.cs6213.p2.BufferedRandomAccessFile;
 
 public class TEST {
 	private static void readLine(String fileName){
@@ -37,7 +30,7 @@ public class TEST {
 					new FileInputStream(fileName)));
 
 			LineNumberReader lreader = new LineNumberReader(new FileReader(fileName));
-//			lreader.mark(5000);
+			//			lreader.mark(5000);
 			lreader.setLineNumber(5000);//not setting physical pointer
 
 			System.out.println(lreader.readLine());
@@ -46,8 +39,6 @@ public class TEST {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-
 	}
 	private static void byteArray(){
 		byte[] salt = {
@@ -55,42 +46,6 @@ public class TEST {
 				(byte) 0x25, (byte)0xc6,
 				(byte) 0x85, (byte)0xa6,
 				(byte) 0xe5, (byte)0x16 };
-
-	}
-
-
-	/** Sort original file into sorted segments */
-	private static int initializeSegments(int segmentSize, String originalFile,
-			String f1) throws Exception {
-
-		int[] list = new int[segmentSize];
-		DataInputStream input = new DataInputStream(new BufferedInputStream(
-				new FileInputStream(originalFile)));
-		DataOutputStream output = new DataOutputStream(
-				new BufferedOutputStream(new FileOutputStream(f1)));
-
-
-		int numberOfSegments = 0;
-		while (input.available() > 0) {
-			numberOfSegments++;
-			int i = 0;
-			for (; input.available() > 0 && i < segmentSize; i++) {
-				list[i] = input.readInt();
-			}
-
-			// Sort an array list[0..i-1]
-			java.util.Arrays.sort(list, 0, i);
-
-			// Write the array to f1.dat
-			for (int j = 0; j < i; j++) {
-				output.writeInt(list[j]);
-			}
-		}
-
-		input.close();
-		output.close();
-
-		return numberOfSegments;
 	}
 
 	private static void randomChannel() {
@@ -126,270 +81,22 @@ public class TEST {
 		} catch (IOException x) {
 			System.out.println("I/O Exception: " + x);
 		}		
-
-
-	}
-
-	private void method() {
-		try (BufferedReader inputReader = Files.newBufferedReader(
-				Paths.get(new URI ("file:///C:/home/docs/users.txt")), Charset.defaultCharset());
-				BufferedWriter outputWriter = Files.newBufferedWriter(
-						Paths.get(new URI("file:///C:/home/docs/users.bak")), Charset.defaultCharset())
-				) {
-
-			BufferedReader br = new BufferedReader(new InputStreamReader(
-					new FileInputStream("")));
-
-
-			String inputLine;
-			while ((inputLine = inputReader.readLine()) != null) {
-				outputWriter.write(inputLine);
-				outputWriter.newLine();
-			}
-			System.out.println("Copy complete!");
-
-		} catch (URISyntaxException | IOException ex) {
-			ex.printStackTrace();
-		}
-
-	}
-
-	private static void loadRandom(String originalFile, int line) {
-
-		try (RandomAccessFile raf = new RandomAccessFile(originalFile, "r");
-				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
-						new FileOutputStream("ind.400k.txt"))  )
-				) {
-
-			double startTime = System.currentTimeMillis();
-			if (line >=0) {
-				raf.seek(line);
-			
-				startTime = System.currentTimeMillis();
-				for (int i = 0; i < 1; i++) {
-					String tmp = raf.readLine();
-					if (tmp.startsWith("Kliol Iesh")) {
-						System.out.println("found: " + tmp);
-						break;
-					}
-					System.out.println(tmp);
-				}
-				double endTime = System.currentTimeMillis();
-				System.out.println("search created took:" + (endTime-startTime)/1000);
-				
-			}/* else
-				for (int i = 0; i < 1000; i++) {
-					System.out.println(raf.getFilePointer());
-					System.out.println(raf.readLine());
-				}*/
-
-/*			startTime = System.currentTimeMillis();
-			System.out.println("Started to get the anchor values.");
-			String tmp,name[];
-			long pter = raf.getFilePointer();;
-			int cnt=0;
-			while (  (tmp = raf.readLine()) != null)  {
-				
-				if (cnt++ % 4000 == 0) {
-					name = tmp.split(",");
-					bw.write(name[0]+ "," +pter);
-					bw.newLine();
-				}
-				pter = raf.getFilePointer();
-			}
-			double endTime = System.currentTimeMillis();
-			System.out.println("Index created took:" + (endTime-startTime)/1000);*/
-			
-		} catch (IOException e) {
-			System.out.println("here");
-			e.printStackTrace();
-		}
-	}
-
-
-	private static void searchInBlock(String dataFile, long startPos, long endPos, String key) {
-		
-		try (RandomAccessFile raf = new RandomAccessFile(dataFile, "r");){
-			byte []block = new byte[ (int)(endPos-startPos) ];
-
-			raf.seek(startPos);
-			raf.read(block);
-			
-			MemoryBufferReader bb = new MemoryBufferReader(block);
-			
-			String tmp= "";
-			String []data={"",""};
-			int cnt=0;
-			boolean found =false;
-			while ((tmp = bb.getNextLine()) != null) {
-				data = tmp.split(",");
-				cnt++;
-				
-				if (key.compareTo(data[0]) == 0) {
-					found = true;
-					break;
-				}
-			}
-			tmp = found?" record found " + data[1]:" record not found";
-			System.out.println("total line:"+cnt+" :"+tmp);
-
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-	}
-	
-	private static class Entry{
-		private String name;
-		private long byteLocation;
-		private Entry(String name, long byteLocation) {
-			this.name = name;
-			this.byteLocation = byteLocation;
-		}
-		@Override
-		public String toString() {
-			return name +"-"+ byteLocation;
-		}
-	}
-	
-	private static List<Entry>idxData = new ArrayList<>();
-	private static void loadIndex(String indexFile) {
-		try (RandomAccessFile idxReader = new RandomAccessFile(indexFile, "r");
-				) {
-			
-			String tmp;
-			String[]data;
-			while (  (tmp = idxReader.readLine()) != null)  {
-				data = tmp.split(",");
-				idxData.add(new Entry(data[0],Long.parseLong(data[1]) ));
-			}
-
-			System.out.println(idxData.size());
-		
-		} catch (IOException e) {
-			e.printStackTrace();
-		}		
-	}
-	
-	private static void searchFile(String dataFile, String name, long byteLocation,int blockSize) {
-		double startTime;
-		double endTime;
-		try (RandomAccessFile raf = new RandomAccessFile(dataFile, "r");) {
-			startTime = System.currentTimeMillis();
-			
-			if (byteLocation >= 0) {
-				raf.seek(byteLocation);
-				String tmp;
-				String data[] ={"",""};
-				boolean found = false;
-				int cnt = 0;
-				while (  (tmp = raf.readLine()) != null && cnt++ < blockSize)  {
-					data = tmp.split(",");
-					if (name.compareTo(data[0]) == 0) {
-						found = true;
-						break;
-					}
-				}
-
-				if (found) {
-					System.out.println("Phone entry found; "+data[1]);
-				} else{
-					System.out.println("Phone entry for "+name+" not found " );	
-				}
-			}
-			endTime = System.currentTimeMillis();
-			System.out.println("search took:" + (endTime-startTime)/1000);			
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-	enum Result{SMALLER,BIGGER,FOUND,NOTFOUND};
-	private static void search(String dataFile, String key) {
-
-		int idxsize = idxData.size()-1;
-		if (idxsize <=0) {
-			System.out.println("index file is not loaded.");
-			return;
-		}
-		// binary search for the anchor index
-		double startTime = System.currentTimeMillis();
-		Entry anchor= null;
-		Result result = null; 
-		int low = 0, high = idxsize;
-		int mid = 0;
-		while (high >= low) {
-			mid = (low + high) / 2;
-			anchor = idxData.get(mid);
-			
-			if (key.compareTo(anchor.name) > 0) {
-				low = mid + 1;
-				result = Result.BIGGER;
-			} else if (key.compareTo(anchor.name) == 0) {
-				result = Result.FOUND;
-				break;
-			} else {
-				high = mid - 1;
-				if (mid == 0) {
-					result = Result.NOTFOUND;
-				} else 
-					result = Result.SMALLER;
-			}
-		} 
-		double endTime = System.currentTimeMillis();
-		System.out.println("search anchor took:" + (endTime-startTime)/1000 +":" + anchor);
-		System.out.println("record in:" + (result==Result.BIGGER? "bigger than "+ mid: "smaller than "+mid) );
-		
-		Entry endAnchor=null;
-		long startPos = 0, endPos = 0;
-		if (result == Result.BIGGER || result == Result.FOUND) {
-			if (mid < idxsize) {
-				mid++;
-				endAnchor = idxData.get(mid);
-				endPos = endAnchor.byteLocation;
-			} else {
-				endPos = new File(dataFile).length();
-			}
-			
-			startPos = anchor.byteLocation;
-			
-		} else if (result == Result.SMALLER) {
-			int b4Mid = mid;
-			if (b4Mid > 0) {
-				b4Mid--;
-			}
-			anchor = idxData.get(b4Mid);
-			endAnchor = idxData.get(mid);
-			
-			startPos = anchor.byteLocation;
-			endPos = endAnchor.byteLocation;
-		} else if (result== Result.NOTFOUND) {
-			System.out.println("name is not in the phone book");
-		}
-		if (endPos>0) {
-			searchInBlock(dataFile, startPos, endPos, key);
-		} else {
-			System.out.println("search is not performed.");
-		}
 	}
 
 	private static void testParse(){
 		String[] data = "".split(" ");
-		
+
 		System.out.println(data.length);
 		for (String st : data) {
 			System.out.println(st);
 		}
-		
 	}
-	
+
 	private static void testQueue() {
 		PriorityQueue<String> tmpList;
 		tmpList = new PriorityQueue<>(1, 
-		
-		new Comparator<String>() {
+
+				new Comparator<String>() {
 			@Override
 			public int compare(String o1, String o2) {
 				return o1.compareTo(o2);
@@ -409,60 +116,201 @@ public class TEST {
 		System.out.println("");
 		while(tmpList.size()>0)
 			System.out.println(tmpList.poll());
-		
+
 		String names[] = {"Ach","Beib","Bech","25-9240","Aw"};
-		
+
 		Collections.sort(Arrays.asList(names),defaultcomparator);
 		System.out.println("");
 		/*for (String n : names) {
 			System.out.println(n);
 		}*/
-		
-	}
-    public static Comparator<String> defaultcomparator = new Comparator<String>() {
-        @Override
-        public int compare(String r1, String r2) {
-                return r1.compareTo(r2);
-        }
-    };
-	
-    private static void testArray() {
 
-    	String data[] = {"Ach","Beib","Bech","25-9240","Aw"};
-    	
-    	String sub[] = new String[3];
-    	System.arraycopy(data, 1, sub, 0, 3);
-    	
-    	for (String s : sub) {
+	}
+	public static Comparator<String> defaultcomparator = new Comparator<String>() {
+		@Override
+		public int compare(String r1, String r2) {
+			return r1.compareTo(r2);
+		}
+	};
+
+	private static void testArray() {
+		Object da[][] = new Object[6][8]; 
+		
+		String data[] = {"Ach","Beib","Bech","25-9240","Aw"};
+
+		String sub[] = new String[3];
+		System.arraycopy(data, 1, sub, 0, 3);
+
+		for (String s : sub) {
 			System.out.println(s);
 		}
 
 	}
-	
-	public static void main(String[] args) {
-		try {
-			//TEST.initializeSegments(10, "largedata.dat", "sorting.txt");
-//			TEST.loadRandom("400K_sorted.txt", 0);
-			
-//			TEST.loadIndex("ind.400k.idx1.txt");
-//			TEST.search("400K_sorted.txt" ,"@Ab Ab");
+	private static void testCollection() {
 
-//			TEST.bufferedArray("400K_sorted.txt");
-			
-//			TEST.buildIndex("4m_datafile.sorted.txt", "4m_datafile.idx.txt", 4000);
-			
-//			TEST.loadIndex("4m_datafile.idx.txt");
-//			TEST.search("4m_datafile.sorted.txt" ,"Autev Fauzynt");
-			TEST.testArray();
-			
-//			TEST.searchInBlock("400K_sorted.txt",2759734,2867194);
-			
+		try (BufferedRandomAccessFile raf = new BufferedRandomAccessFile(
+				"input/inputfile.01.txt", "r");) {
+
+			List<String>data =new ArrayList<>(5);
+
+			String tmp;
+			int cnt =0;
+			while ( (tmp=raf.getNextLine())!=null  )  {
+				if (++cnt >20) {
+					break;
+				}
+				data.add(tmp);
+			}
+
+			System.out.println(data);
+
+			cnt=0;
+			Stack<String> st = new Stack<>();
+			while ( (tmp=raf.getNextLine())!=null  )  {
+				if (++cnt >20) {
+					break;
+				}
+				st.push(tmp);
+			}
+
+			cnt=0;
+			Queue<String> qu = new PriorityBlockingQueue<>(1, defaultcomparator);
+			while ( (tmp=raf.getNextLine())!=null  )  {
+				if (++cnt >20) {
+					break;
+				}
+				qu.offer(tmp);
+			}
+
+			int v =5;
+			for (int i =0; i< v;i++) {
+
+				String a = qu.peek();
+				System.out.println(a);
+				qu.remove();
+
+			}
+			while(qu.size()>0)
+				System.out.println(qu.poll());
+
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-		
+
+	static PriorityBlockingQueue<String> qu = new PriorityBlockingQueue<>(1, defaultcomparator);
+	static ArrayBlockingQueue<String> ioData = new ArrayBlockingQueue<>(1);
+	static LinkedBlockingDeque<String> lq = new LinkedBlockingDeque<>(1);
+	private static void doTestBlockingColl() {
+
+
+		Runnable a =new Runnable() {
+
+			@Override
+			public void run() {
+				try (BufferedRandomAccessFile raf = new BufferedRandomAccessFile(
+						"input/inputfile.01.txt", "r");) {
+
+					while (true) {
+
+						Thread.sleep(2000);
+						String t = raf.getNextLine();
+
+						qu.put(t);
+						System.out.println(Thread.currentThread().getName() + " offered " + t);
+					}
+
+				} catch (Exception e) {
+
+					e.printStackTrace();
+				}
+
+
+			}
+		};
+		Runnable b =new Runnable() {
+
+			@Override
+			public void run() {
+				while(true){
+					try {
+						System.out.println("going to take");
+						String tm = qu.take();
+
+						System.out.println(Thread.currentThread().getName() + "taken   " + tm);
+						Thread.sleep(10);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
+		};
+
+		new Thread(a).start();
+		new Thread(b).start();
+
+	}
+
+	@Action
+	static void testCharacter() {
+		char ch = 'a';
+
+		char uniChar = '\u039A';
+
+		Character cha = new Character('a');
+		System.out.println(ch);
+		System.out.println(uniChar);
+
+	}
+
 	
+	private static double[][]matrix = {{1},{4},
+										{3},{6}};
+	private static double[][] square = {
+            {8, 1, 6},
+            {3, 5, 7},
+            {4, 9, 2}
+        };
 	
+	/**
+	 * J:\development_kit_2013\Portable Offline Browser\Download\www.seas.gwu.edu\~simhaweb\cs133\lectures\module2\module2.html
+	 */
+	private static double[][] A = {
+	            {1},
+	            {2, 1},
+	            {3, 2, 1},
+	            {4, 3, 2, 1},
+	            {5, 4, 3, 2, 1}
+	        };
+
+	/** Return the sum of the elements of matrix. */
+	public static double testSum(double[][] matrix) {       // once
+		double result = 0;                                // once
+		for (int i = 0; i < matrix.length; i++) {         // n + 1 times
+			for (int j = 0; j < matrix[i].length; j++) {    // n(n + 1) times
+				result += matrix[i][j];                       // n * n times
+				System.out.print(matrix[i][j] +" ");
+			}
+			System.out.println("");
+		}
+		return result;                                    // once
+	}
+
+
+	public static void main(String[] args) {
+		try {
+			//TEST.initializeSegments(10, "largedata.dat", "sorting.txt");
+			TEST.testArray();
+
+			//			TEST.searchInBlock("400K_sorted.txt",2759734,2867194);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+
 
 }
